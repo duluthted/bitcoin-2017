@@ -1,20 +1,20 @@
 # start with a json file, clean it, remove duplicates, output date and text fields
 
-##rm -fr $1.tmp
-##rm -fr $1.uniq
-##rm -fr $1.clean
-rm -fr $1.before
-rm -fr $1.after
+#rm -fr $1.tmp
+#rm -fr $1.uniq
+#rm -fr $1.before
+#rm -fr $1.after
+#rm -fr $1.clean
 rm -fr $1.*cnt
 rm -fr $1.*ll
 rm -fr $1.*sval2
 
 # get unduplicated json count
 
-echo "get unduplicate json count"
- sort $1 | uniq > $1.uniq
+#echo "get unduplicate json count"
+# sort $1 | uniq > $1.uniq
 
-echo "running extracttweet" 
+#echo "running extracttweet" 
 
 # get duplicate count before normalization
 
@@ -32,12 +32,6 @@ perl cleantweet.pl $1.tmp |sort |uniq -f 1 > $1.clean
 
 # count ngrams in entire corpus
 
-for gram in 1 2 3
-do
-	echo "whole corpus gram $gram"
-	count.pl --remove 5 --ngram $gram --stop stoplist-nsp.regex --newline $1.$gram.cnt $1.clean 
-done
-
 for month in 2016nov 2016dec 2017jan 2017feb 2017mar 2017apr
 do 
 	echo "grep $month" 
@@ -54,7 +48,22 @@ do
 	for gram in 1 2 3
 	do
 		echo "gram $gram"
-		count.pl --remove 5 --ngram $gram --stop stoplist-nsp.regex --newline $1.$month.$gram.cnt $1.$month.clean.tmp
+		count.pl --remove 20 --ngram $gram --stop stoplist-nsp.regex --newline $1.$month.$gram.rem20.cnt $1.$month.clean.tmp 
+	done
+
+	for gram in 2 3
+	do
+		for window in 10 
+		do
+			echo "gram $gram window $window"
+			count.pl --remove 20 --ngram $gram --window $window --stop stoplist-nsp.regex --newline $1.$month.$window.$gram.rem20.cnt $1.$month.clean.tmp  
+		done
+	done
+
+	for gram in 2 3
+	do
+		echo "gram $gram"
+		statistic.pl ll --ngram $gram $1.$month.$gram.rem20.ll $1.$month.$gram.rem20.cnt
 	done
 
 	for gram in 2 3
@@ -62,18 +71,15 @@ do
 		for window in 4 10 
 		do
 			echo "gram $gram window $window"
-			count.pl --remove 5 --ngram $gram --window $window --stop stoplist-nsp.regex --newline $1.$month.$window.$gram.cnt $1.$month.clean.tmp 
+#			statistic.pl ll --ngram $gram $1.$month.$window.$gram.ll $1.$month.$window.$gram.cnt
 		done
 	done
+done
 
-	for gram in 2 3
-	do
-		for window in 4 10 
-		do
-			echo "gram $gram window $window"
-			statistic.pl ll --ngram $gram $1.$month.$window.$gram.ll $1.$month.clean.tmp 
-		done
-	done
+for gram in 1 2 3
+do
+	echo "whole corpus gram $gram"
+	count.pl --remove 20 --ngram $gram --stop stoplist-nsp.regex --newline $1.$gram.rem20.cnt $1.clean  
 done
 
 echo "get word counts"
